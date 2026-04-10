@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dashboard Proyecto SIF · Analytics Trello</title>
+    <!-- Bootstrap 5 + Icons + Font -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background: #f0f2f5;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+        .card {
+            border: none;
+            border-radius: 1.25rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.03), 0 2px 6px rgba(0,0,0,0.05);
+            transition: transform 0.1s ease;
+        }
+        .card-header {
+            background: white;
+            border-bottom: 1px solid #eef2f6;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            border-radius: 1.25rem 1.25rem 0 0 !important;
+        }
+        .stat-icon {
+            font-size: 2rem;
+            opacity: 0.75;
+        }
+        .kanban-badge {
+            background: #eef2fa;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
+        .footer {
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+        .progress-bar-custom {
+            height: 6px;
+            border-radius: 10px;
+        }
+        @media (max-width: 768px) {
+            .card-header {
+                padding: 0.8rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-light bg-white shadow-sm sticky-top">
+    <div class="container-fluid px-4 py-2">
+        <span class="navbar-brand mb-0 h1"><i class="bi bi-kanban me-2 text-trello-blue" style="color:#0052cc;"></i> Proyecto SIF · <span class="fw-normal text-secondary">Trello Analytics</span></span>
+        <div class="d-flex gap-2">
+            <span class="badge bg-light text-dark border px-3 py-2"><i class="bi bi-calendar-week"></i> Sprint 1.2.0</span>
+            <button class="btn btn-outline-secondary btn-sm" id="refreshBtn"><i class="bi bi-arrow-repeat"></i> Recargar datos</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container py-4 px-3 px-lg-4">
+    <!-- KPI Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 stat-icon"><i class="bi bi-card-list fs-1 text-primary"></i></div>
+                    <div>
+                        <span class="text-secondary text-uppercase small fw-semibold">Tareas totales</span>
+                        <h2 class="fw-bold mb-0" id="totalCardsCount">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 stat-icon"><i class="bi bi-check2-circle fs-1 text-success"></i></div>
+                    <div>
+                        <span class="text-secondary text-uppercase small fw-semibold">Completadas (DueComplete)</span>
+                        <h2 class="fw-bold mb-0" id="completedTasksCount">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 stat-icon"><i class="bi bi-person-badge fs-1 text-info"></i></div>
+                    <div>
+                        <span class="text-secondary text-uppercase small fw-semibold">Miembros activos</span>
+                        <h2 class="fw-bold mb-0" id="membersCount">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body d-flex align-items-center">
+                    <div class="me-3 stat-icon"><i class="bi bi-tags fs-1 text-warning"></i></div>
+                    <div>
+                        <span class="text-secondary text-uppercase small fw-semibold">Checklist completados</span>
+                        <h2 class="fw-bold mb-0" id="checklistCompletionAvg">0%</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts: distribución por tipo y estado -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-7">
+            <div class="card h-100">
+                <div class="card-header bg-transparent"><i class="bi bi-pie-chart me-2"></i> Distribución por área (Frontend / Backend / Diseño)</div>
+                <div class="card-body">
+                    <canvas id="typeChart" height="230" style="max-height: 270px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-header bg-transparent"><i class="bi bi-list-ul me-2"></i> Estado de las listas (Workflow actual)</div>
+                <div class="card-body p-0">
+                    <div id="listStatusContainer" class="list-group list-group-flush"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progreso general y top colaboradores (TODOS LOS MIEMBROS) -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-transparent"><i class="bi bi-hourglass-split me-2"></i> Tareas completadas vs Pendientes</div>
+                <div class="card-body">
+                    <canvas id="completionChart" height="180"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-transparent"><i class="bi bi-people me-2"></i> Ranking completo: tareas por colaborador</div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush" id="topMembersList">
+                        <li class="list-group-item bg-light text-center">Cargando...</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla detallada de tarjetas con filtros -->
+    <div class="card mt-2">
+        <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="bi bi-table me-2"></i> Listado completo de tareas</span>
+            <div class="d-flex gap-2">
+                <input type="text" id="searchCard" class="form-control form-control-sm w-auto" placeholder="🔍 Buscar...">
+                <select id="filterLabel" class="form-select form-select-sm w-auto">
+                    <option value="all">Todas las etiquetas</option>
+                </select>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="cardsTable">
+                    <thead class="table-light">
+                        <tr><th>Nombre</th><th>Área / Etiquetas</th><th>Lista actual</th><th>Vencimiento</th><th>Checklist</th><th>Asignados</th></tr>
+                    </thead>
+                    <tbody id="cardsTableBody"><tr><td colspan="6" class="text-center py-4">Cargando...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white text-muted small" id="tableInfoFooter"></div>
+    </div>
+</div>
+
+<footer class="footer mt-5 py-3 text-center text-muted small border-top">
+    <span>📊 Reporte ejecutivo · Proyecto SIF · Sprint 1.2.0 · Incluye a todo el equipo: Cristian, Juan Pablo, Brenda, Camilo, familyunida17, Yayana</span>
+</footer>
+
+<script>
+    // ------------------------------------------------------------
+    // DATOS COMPLETOS DEL JSON (TODOS LOS MIEMBROS INCLUYENDO CAMILO GIL)
+    const trelloBoard = {
+  "cards": [
+    {"name":"Historial de recibos backend","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Backend","color":"red"}],"due":"2026-04-10T00:23:00.000Z","dueComplete":false,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb4ce3cdf77e7f72736900","62b8c9c8796aea809c359a22"]},
+    {"name":"Historial de recibos fronted","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"fronted","color":"green_dark"}],"due":"2026-04-09T23:40:00.000Z","dueComplete":false,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb557ae639d9bb9c35e7a8","69bcaa5380142eba47e856f0"]},
+    {"name":"Gestion de productos fronted","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"fronted","color":"green_dark"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb57f8674436cde3e282e1","69bb55e795d61443ac940d85"]},
+    {"name":"Gestion de productos backend","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Backend","color":"red"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["62b8c9c8796aea809c359a22","69bcaa5380142eba47e856f0"]},
+    {"name":"Autenticación de usuario fronted","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"fronted","color":"green_dark"}],"dueComplete":true,"badges":{"checkItems":4,"checkItemsChecked":4},"idMembers":["69bb4ce3cdf77e7f72736900","69bb57f8674436cde3e282e1"]},
+    {"name":"Autenticación de usuario backend","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Backend","color":"red"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb557ae639d9bb9c35e7a8","69bcaa5380142eba47e856f0"]},
+    {"name":"Implementación del dashboard con alertas de stock Backend","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Backend","color":"red"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb55e795d61443ac940d85","62b8c9c8796aea809c359a22"]},
+    {"name":"Implementación del dashboard con alertas de stock fronted","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"fronted","color":"green_dark"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb55e795d61443ac940d85","62b8c9c8796aea809c359a22"]},
+    {"name":"Gestión de categorías fronted","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"fronted","color":"green_dark"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bcaa5380142eba47e856f0","69bb55e795d61443ac940d85"]},
+    {"name":"Gestión de categorías backend","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"backend","color":"red"}],"dueComplete":true,"badges":{"checkItems":3,"checkItemsChecked":3},"idMembers":["69bb4ce3cdf77e7f72736900","69bb557ae639d9bb9c35e7a8"]},
+    {"name":"Recolección y análisis de información del proyecto","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Diseño","color":"orange_dark"}],"dueComplete":true,"badges":{"checkItems":2,"checkItemsChecked":2},"idMembers":["69bb557ae639d9bb9c35e7a8","69bb4ce3cdf77e7f72736900"]},
+    {"name":"Interfaz y navegación de sistema","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Diseño","color":"orange_dark"}],"dueComplete":true,"badges":{"checkItems":2,"checkItemsChecked":2},"idMembers":["69bb57f8674436cde3e282e1","69bb4ce3cdf77e7f72736900"]},
+    {"name":"Diseño de mockups del sistema","idList":"69bb568da5af66c9693aa6bf","labels":[{"name":"Diseño","color":"orange_dark"}],"dueComplete":true,"badges":{"checkItems":2,"checkItemsChecked":2},"idMembers":["69bb55e795d61443ac940d85","69bb57f8674436cde3e282e1"]}
+  ],
+  "members": [
+    {"id":"69bb4ce3cdf77e7f72736900","fullName":"Cristian Camilo Hurtado Quevedo","username":"cristiancamilohurtadoquevedo"},
+    {"id":"62b8c9c8796aea809c359a22","fullName":"juan pablo valderrama","username":"juanpablovalderrama3"},
+    {"id":"69bb55e795d61443ac940d85","fullName":"Brenda Castiblanco","username":"brendacastiblanco"},
+    {"id":"69bb57f8674436cde3e282e1","fullName":"Camilo Gil","username":"camilogil1"},
+    {"id":"69bb557ae639d9bb9c35e7a8","fullName":"familyunida17","username":"familyunida17"},
+    {"id":"69bcaa5380142eba47e856f0","fullName":"Yayana","username":"yayana7"}
+  ],
+  "lists": [
+    {"id":"69bb568da5af66c9693aa6ba","name":"🗒 Backlog"},
+    {"id":"69bb568da5af66c9693aa6bb","name":"🗓 Sprint Backlog - [Timeline]"},
+    {"id":"69bb568da5af66c9693aa6bc","name":"📅 Working On"},
+    {"id":"69bb568da5af66c9693aa6bd","name":"🐞 Bugs"},
+    {"id":"69bb568da5af66c9693aa6be","name":"🧑🏾‍💻 Testing [Staging Server]"},
+    {"id":"69bb568da5af66c9693aa6bf","name":"📆 Sprint - Done [Version: 1.2.0]"},
+    {"id":"69bb568da5af66c9693aa6c0","name":"🗄 Sprint - Done [Version: 1.1.0}"}
+  ]
+};
+
+    // Mapeo de miembros (todos, incluido Camilo Gil)
+    const memberMap = new Map();
+    trelloBoard.members.forEach(m => memberMap.set(m.id, m.fullName || m.username));
+
+    function enrichCards() {
+        return trelloBoard.cards.map(card => {
+            const completedCheck = card.badges?.checkItemsChecked || 0;
+            const totalCheck = card.badges?.checkItems || 0;
+            const progress = totalCheck === 0 ? 0 : Math.round((completedCheck / totalCheck) * 100);
+            let labelNamesList = (card.labels || []).map(lbl => lbl.name || lbl.color).filter(Boolean);
+            const listObj = trelloBoard.lists.find(l => l.id === card.idList);
+            const listName = listObj ? listObj.name : "Desconocido";
+            const dueDate = card.due ? new Date(card.due).toLocaleDateString('es-ES') : "Sin fecha";
+            const isComplete = card.dueComplete === true || (totalCheck > 0 && completedCheck === totalCheck);
+            return {
+                ...card,
+                listName,
+                labelNames: labelNamesList,
+                progress,
+                isComplete,
+                dueDate,
+                membersNames: (card.idMembers || []).map(mid => memberMap.get(mid) || mid).filter(v=>v),
+                totalCheckItems: totalCheck,
+                completedCheckItems: completedCheck
+            };
+        });
+    }
+
+    let enrichedCards = enrichCards();
+
+    function updateStats() {
+        const total = enrichedCards.length;
+        const completed = enrichedCards.filter(c => c.isComplete === true).length;
+        const totalChecklistItems = enrichedCards.reduce((acc, c) => acc + (c.totalCheckItems || 0), 0);
+        const completedChecklistItems = enrichedCards.reduce((acc, c) => acc + (c.completedCheckItems || 0), 0);
+        const avgCompletion = totalChecklistItems === 0 ? 0 : Math.round((completedChecklistItems / totalChecklistItems) * 100);
+        document.getElementById('totalCardsCount').innerText = total;
+        document.getElementById('completedTasksCount').innerText = completed;
+        document.getElementById('membersCount').innerText = trelloBoard.members.length;
+        document.getElementById('checklistCompletionAvg').innerText = avgCompletion + "%";
+    }
+
+    let typeChart, completionChart;
+    function renderTypeChart() {
+        let front=0, back=0, design=0;
+        enrichedCards.forEach(c => {
+            const low = c.labelNames.map(l=>l.toLowerCase());
+            if(low.includes('fronted')) front++;
+            if(low.includes('backend')) back++;
+            if(low.includes('diseño')) design++;
+        });
+        const ctx = document.getElementById('typeChart').getContext('2d');
+        if(typeChart) typeChart.destroy();
+        typeChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: ['Frontend', 'Backend', 'Diseño'], datasets: [{ data: [front, back, design], backgroundColor: ['#2d6a4f', '#d00000', '#ff9f1c'], borderWidth: 0 }] },
+            options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    function renderCompletionChart() {
+        const completed = enrichedCards.filter(c => c.isComplete).length;
+        const pending = enrichedCards.length - completed;
+        const ctx = document.getElementById('completionChart').getContext('2d');
+        if(completionChart) completionChart.destroy();
+        completionChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['✅ Completadas', '⏳ Pendientes'], datasets: [{ label: 'Tareas', data: [completed, pending], backgroundColor: ['#198754', '#ffc107'], borderRadius: 8 }] },
+            options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    // Ranking completo de colaboradores (TODOS los miembros con al menos una tarea)
+    function renderTopMembers() {
+        const memberAssign = new Map();
+        enrichedCards.forEach(card => {
+            (card.idMembers || []).forEach(mid => {
+                const name = memberMap.get(mid) || mid;
+                memberAssign.set(name, (memberAssign.get(name) || 0) + 1);
+            });
+        });
+        // Orden descendente y mostrar todos (no solo top 5)
+        const sorted = Array.from(memberAssign.entries()).sort((a,b) => b[1] - a[1]);
+        const container = document.getElementById('topMembersList');
+        if (sorted.length === 0) {
+            container.innerHTML = '<li class="list-group-item">Sin asignaciones</li>';
+        } else {
+            container.innerHTML = sorted.map(([name, count]) => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-person-circle me-2"></i> ${name}</span>
+                    <span class="badge bg-primary rounded-pill">${count} tarea${count !== 1 ? 's' : ''}</span>
+                </li>
+            `).join('');
+        }
+    }
+
+    function renderListStatus() {
+        const listCounts = new Map();
+        enrichedCards.forEach(c => listCounts.set(c.listName, (listCounts.get(c.listName) || 0) + 1));
+        const container = document.getElementById('listStatusContainer');
+        if(listCounts.size === 0) container.innerHTML = '<div class="p-3 text-center">Sin datos</div>';
+        else {
+            container.innerHTML = Array.from(listCounts.entries()).map(([name, count]) => `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-layout-three-columns me-2"></i> ${name}</span>
+                    <span class="badge bg-secondary rounded-pill">${count}</span>
+                </div>
+            `).join('');
+        }
+    }
+
+    function renderCardsTable(filterText = '', filterLabelValue = 'all') {
+        let filtered = [...enrichedCards];
+        if (filterText.trim()) {
+            const lower = filterText.toLowerCase();
+            filtered = filtered.filter(c => c.name.toLowerCase().includes(lower));
+        }
+        if (filterLabelValue !== 'all') {
+            filtered = filtered.filter(c => c.labelNames.some(lbl => lbl === filterLabelValue || lbl.toLowerCase() === filterLabelValue.toLowerCase()));
+        }
+        const tbody = document.getElementById('cardsTableBody');
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No se encontraron tareas</td></tr>';
+            document.getElementById('tableInfoFooter').innerText = `Mostrando 0 de ${enrichedCards.length} tareas`;
+            return;
+        }
+        tbody.innerHTML = filtered.map(card => `
+            <tr>
+                <td class="fw-semibold">${escapeHtml(card.name)}</td>
+                <td>${card.labelNames.map(l => `<span class="badge bg-secondary bg-opacity-25 text-dark me-1">${escapeHtml(l)}</span>`).join('') || '—'}</td>
+                <td><span class="kanban-badge">${escapeHtml(card.listName)}</span></td>
+                <td class="small">${card.dueDate !== "Sin fecha" ? `<i class="bi bi-calendar3 me-1"></i>${card.dueDate}` : '—'}</td>
+                <td>${card.totalCheckItems ? `<div class="d-flex align-items-center gap-2"><span class="small">${card.completedCheckItems}/${card.totalCheckItems}</span><div class="progress w-75 progress-bar-custom" style="height:6px"><div class="progress-bar bg-success" style="width: ${card.progress}%"></div></div></div>` : 'N/A'}</td>
+                <td><small>${card.membersNames.slice(0,2).join(', ')}${card.membersNames.length > 2 ? '...' : ''}</small></td>
+            </tr>
+        `).join('');
+        document.getElementById('tableInfoFooter').innerText = `Mostrando ${filtered.length} de ${enrichedCards.length} tareas`;
+    }
+
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+
+    function initFilters() {
+        const allLabelsSet = new Set();
+        enrichedCards.forEach(c => c.labelNames.forEach(l => allLabelsSet.add(l)));
+        const select = document.getElementById('filterLabel');
+        select.innerHTML = '<option value="all">🏷️ Todas las etiquetas</option>' + Array.from(allLabelsSet).sort().map(lbl => `<option value="${lbl}">${lbl}</option>`).join('');
+        const searchInput = document.getElementById('searchCard');
+        const filterSelect = document.getElementById('filterLabel');
+        const refresh = () => renderCardsTable(searchInput.value, filterSelect.value);
+        searchInput.addEventListener('input', refresh);
+        filterSelect.addEventListener('change', refresh);
+        refresh();
+    }
+
+    function refreshDashboard() {
+        enrichedCards = enrichCards();
+        updateStats();
+        renderTypeChart();
+        renderCompletionChart();
+        renderTopMembers();
+        renderListStatus();
+        initFilters();
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', () => refreshDashboard());
+    refreshDashboard();
+
+    window.addEventListener('resize', () => {
+        if(typeChart) typeChart.resize();
+        if(completionChart) completionChart.resize();
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
