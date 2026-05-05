@@ -43,12 +43,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
     return RefreshIndicator(
       onRefresh: () => context.read<AppProvider>().refreshAll(),
-      child: SingleChildScrollView(
+      child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          MediaQuery.of(context).viewPadding.bottom + 80,
+        ),
+        children: [
           // Header
           Container(
             width: double.infinity,
@@ -199,9 +202,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
           // Top Products Chart
           _buildTopProductsChart(topProducts),
-            const SizedBox(height: 80),
-          ],
-        ),
+          const SizedBox(height: 80),
+        ],
       ),
     );
   }
@@ -246,9 +248,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                   color: AppTheme.textSecondary,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  DateFormat('dd/MM/yyyy').format(date),
-                  style: const TextStyle(fontSize: 14),
+                Expanded(
+                  child: Text(
+                    DateFormat('dd/MM/yyyy').format(date),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 14),
+                  ),
                 ),
               ],
             ),
@@ -291,6 +297,8 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           const SizedBox(height: 4),
           Text(
             value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,

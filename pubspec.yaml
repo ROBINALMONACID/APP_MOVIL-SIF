@@ -23,6 +23,9 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
 
+dependency_overrides:
+  path_provider_foundation: 2.5.1
+
 flutter:
   uses-material-design: true
   assets:
@@ -32,7 +35,7 @@ flutter_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/img/logos/Logo_B.png"
-  adaptive_icon_background: "#ffffff"
+  adaptive_icon_background: "assets/img/logos/Logo_B.png"
   adaptive_icon_foreground: "assets/img/logos/Logo_B.png"
   remove_alpha_ios: true
   min_sdk_android: 21
