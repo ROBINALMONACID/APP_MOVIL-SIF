@@ -1,7 +1,7 @@
 /// Configuracion de la API
 class ApiConfig {
   // URL base de la API
-  static const String baseUrl = 'http://127.0.0.1:3001/api/v1';
+  static const String baseUrl ='https://57lpm0r4-3001.use2.devtunnels.ms/api/v1';
 
   // Endpoints
   static const String categories = '/categoria';

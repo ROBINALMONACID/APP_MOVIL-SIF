@@ -28,113 +28,115 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-          // Welcome Header
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2563EB), Color(0xFF06B6D4)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+            // Welcome Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF2563EB), Color(0xFF06B6D4)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.auto_awesome,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '¡Bienvenido!',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  const SizedBox(width: 12),
+                  const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¡Bienvenido!',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Panel de control principal',
-                      style: TextStyle(fontSize: 12, color: Colors.white70),
-                    ),
-                  ],
+                      Text(
+                        'Panel de control principal',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Stats Grid
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              // Use a slightly lower aspect ratio to give the cards more vertical space
+              // on narrow devices and avoid overflow issues.
+              childAspectRatio: 1.0,
+              children: [
+                _buildStatCard(
+                  context,
+                  title: 'Productos',
+                  value: totalProducts.toString(),
+                  icon: Icons.inventory_2,
+                  color: AppTheme.primaryBlue,
+                  bgColor: const Color(0xFFEFF6FF),
+                ),
+                _buildStatCard(
+                  context,
+                  title: 'Categorías',
+                  value: totalCategories.toString(),
+                  icon: Icons.category,
+                  color: AppTheme.success,
+                  bgColor: const Color(0xFFECFDF5),
+                ),
+                _buildStatCard(
+                  context,
+                  title: 'Recibos',
+                  value: totalReceipts.toString(),
+                  icon: Icons.receipt_long,
+                  color: const Color(0xFF8B5CF6),
+                  bgColor: const Color(0xFFF5F3FF),
+                ),
+                _buildStatCard(
+                  context,
+                  title: 'Ingresos',
+                  value: '\$${totalRevenue.toStringAsFixed(2)}',
+                  icon: Icons.attach_money,
+                  color: AppTheme.warning,
+                  bgColor: const Color(0xFFFEF3C7),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Stats Grid
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.3,
-            children: [
-              _buildStatCard(
-                context,
-                title: 'Productos',
-                value: totalProducts.toString(),
-                icon: Icons.inventory_2,
-                color: AppTheme.primaryBlue,
-                bgColor: const Color(0xFFEFF6FF),
-              ),
-              _buildStatCard(
-                context,
-                title: 'Categorías',
-                value: totalCategories.toString(),
-                icon: Icons.category,
-                color: AppTheme.success,
-                bgColor: const Color(0xFFECFDF5),
-              ),
-              _buildStatCard(
-                context,
-                title: 'Recibos',
-                value: totalReceipts.toString(),
-                icon: Icons.receipt_long,
-                color: const Color(0xFF8B5CF6),
-                bgColor: const Color(0xFFF5F3FF),
-              ),
-              _buildStatCard(
-                context,
-                title: 'Ingresos',
-                value: '\$${totalRevenue.toStringAsFixed(2)}',
-                icon: Icons.attach_money,
-                color: AppTheme.warning,
-                bgColor: const Color(0xFFFEF3C7),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
+            // Low Stock Alert
+            _buildAlertCard(context, lowStockProducts, categories),
+            const SizedBox(height: 20),
 
-          // Low Stock Alert
-          _buildAlertCard(context, lowStockProducts, categories),
-          const SizedBox(height: 20),
-
-          // Recent Receipts
-          _buildRecentReceiptsCard(context, receipts),
+            // Recent Receipts
+            _buildRecentReceiptsCard(context, receipts),
           ],
         ),
       ),
@@ -189,6 +191,8 @@ class DashboardScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
